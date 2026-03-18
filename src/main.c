@@ -1,4 +1,3 @@
-#include <math.h>
 #define BN_IMPLEMENTATION
 #include "bn.h"
 
@@ -15,52 +14,6 @@ void writeColor(FILE* fptr, Vec3f32 pixel_color) {
     fprintf(fptr, "\n");
 }
 
-Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x + v.x, u.y + v.y, u.z + v.z}};
-}
-
-Vec3f32 vec3f32AddScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32){{u.x + s, u.y + s, u.z + s}};
-}
-
-Vec3f32 vec3f32Sub(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x - v.x, u.y - v.y, u.z - v.z}};
-}
-
-Vec3f32 vec3f32Mult(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x * v.x, u.y * v.y, u.z * v.z}};
-}
-
-Vec3f32 vec3f32MultScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32){{u.x * s, u.y * s, u.z * s}};
-}
-
-Vec3f32 vec3f32DivScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32)vec3f32MultScalar(u, (1 / s));
-}
-
-f32 vec3f32LengthSquared(Vec3f32 v) {
-    return v.x * v.x + v.y * v.y + v.z * v.z;
-}
-
-f32 vec3f32Length(Vec3f32 v) {
-    return sqrt(vec3f32LengthSquared(v));
-}
-
-Vec3f32 vec3f32UnitVector(Vec3f32 v) {
-    return vec3f32DivScalar(v, vec3f32Length(v));
-}
-
-f32 vec3f32Dot(Vec3f32 u, Vec3f32 v) {
-    return u.x * v.x + u.y * v.y + u.z * v.z;
-}
-
-Vec3f32 vec3f32Cross(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){
-        {u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z, u.x * v.y - u.y * v.x}
-    };
-}
-
 typedef struct {
     Vec3f32 orig;
     Vec3f32 dir;
@@ -70,19 +23,26 @@ Vec3f32 rayAt(Ray* r, f32 t) {
     return vec3f32Add(r->orig, vec3f32MultScalar(r->dir, t));
 }
 
-bool hitSphere(Vec3f32 center, f32 radius, Ray* r) {
+f32 hitSphere(Vec3f32 center, f32 radius, Ray* r) {
     Vec3f32 oc = vec3f32Sub(center, r->orig);
     f32 a = vec3f32Dot(r->dir, r->dir);
     f32 b = -2.0 * vec3f32Dot(r->dir, oc);
     f32 c = vec3f32Dot(oc, oc) - radius * radius;
     f32 discriminant = b * b - 4 * a * c;
-    return (discriminant >= 0);
+
+    if (discriminant < 0) {
+        return -1.0;
+    } else {
+        return (-b - sqrt(discriminant)) / (2.0 * a);
+    }
 }
 
 Vec3f32 rayColor(Ray* r) {
-    if (hitSphere((Vec3f32){{0, 0, -1}}, 0.5, r)) {
-        logWarn("sphere");
-        return (Vec3f32){{1, 0, 0}};
+    f32 t = hitSphere((Vec3f32){{0, 0, -1}}, 0.5, r);
+    if (t > 0.0) {
+        Vec3f32 N =
+            vec3f32UnitVector(vec3f32Sub(rayAt(r, t), (Vec3f32){{0, 0, -1}}));
+        return vec3f32MultScalar((Vec3f32){{N.x + 1, N.y + 1, N.z + 1}}, 0.5);
     }
 
     Vec3f32 unit_direction = vec3f32UnitVector(r->dir);
@@ -118,12 +78,6 @@ int main(void) {
     Vec3f32 pixel_delta_v = vec3f32DivScalar(viewport_v, (f32)image_height);
 
     // Calculate the location of the upper left pixel.
-    // Vec3f32 viewport_upper_left = vec3f32Sub(
-    //     vec3f32Sub(camera_center, (Vec3f32){{0, 0, focal_length}}),
-    //     vec3f32Sub(
-    //         vec3f32DivScalar(viewport_u, 2), vec3f32DivScalar(viewport_v, 2)
-    //     )
-    // );
     Vec3f32 viewport_upper_left = vec3f32Sub(
         vec3f32Sub(
             vec3f32Sub(camera_center, (Vec3f32){{0, 0, focal_length}}),
@@ -132,10 +86,6 @@ int main(void) {
         vec3f32DivScalar(viewport_v, 2)
     );
 
-    // Vec3f32 pixel00_loc = vec3f32Mult(
-    //     vec3f32AddScalar(viewport_upper_left, 0.5),
-    //     vec3f32Add(pixel_delta_u, pixel_delta_v)
-    // );
     Vec3f32 pixel00_loc = vec3f32Add(
         viewport_upper_left,
         vec3f32MultScalar(vec3f32Add(pixel_delta_u, pixel_delta_v), 0.5)

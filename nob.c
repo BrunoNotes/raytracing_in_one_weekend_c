@@ -30,9 +30,6 @@ int main(int argc, char** argv) {
         nob_cmd_append(&cmd, "-O3");
     }
 
-    nob_cmd_append(&cmd, "-I./vendor/include");
-    nob_cmd_append(&cmd, "-L./vendor/lib");
-
     nob_cmd_append(&cmd, "-o");
     nob_cmd_append(&cmd, "bin/main");
     nob_cmd_append(&cmd, "src/main.c");

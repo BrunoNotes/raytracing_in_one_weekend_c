@@ -1,52 +1,54 @@
 #pragma once
 
 /*
-    BrunoNotes C helper lib
-    #define BN_IMPLEMENTATION
+BrunoNotes C helper lib
+#define BN_IMPLEMENTATION
+#include "bn.h"
 */
 
 #define BN_ASSERT_ENABLED // comment to disable asserts
 
+// clang-format off
 #if defined(__cplusplus)
-extern "C" {
+    extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <math.h>
 
 #ifndef thread_local
-#define thread_local _Thread_local
+    #define thread_local _Thread_local
 #endif
 
 #ifdef __GNUC__
-#ifndef _VA_LIST_DEFINED
-#include <stdio.h>
-typedef __gnuc_va_list va_list;
-#define _VA_LIST_DEFINED
-#endif
+    #ifndef _VA_LIST_DEFINED
+        #include <stdio.h>
+        typedef __gnuc_va_list va_list;
+        #define _VA_LIST_DEFINED
+    #endif
 #else
-#include <stdarg.h>
+    #include <stdarg.h>
 #endif
 
 #ifndef va_arg
-
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
-/* C23 uses a special builtin. */
-#define va_start(...) __builtin_c23_va_start(__VA_ARGS__)
-#else
-/* Versions before C23 do require the second parameter. */
-#define va_start(ap, param) __builtin_va_start(ap, param)
-#endif
-#define va_end(ap) __builtin_va_end(ap)
-#define va_arg(ap, type) __builtin_va_arg(ap, type)
-
+    #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+        /* C23 uses a special builtin. */
+        #define va_start(...) __builtin_c23_va_start(__VA_ARGS__)
+    #else
+        /* Versions before C23 do require the second parameter. */
+        #define va_start(ap, param) __builtin_va_start(ap, param)
+    #endif
+    #define va_end(ap) __builtin_va_end(ap)
+    #define va_arg(ap, type) __builtin_va_arg(ap, type)
 #endif
 
 #if _MSC_VER
-#include <intrin.h>
-#define debugBreak() __debugbreak()
+    #include <intrin.h>
+    #define debugBreak() __debugbreak()
 #else
-#define debugBreak() __builtin_trap()
+    #define debugBreak() __builtin_trap()
 #endif
+// clang-format on
 
 #include <stdint.h>
 
@@ -98,6 +100,18 @@ vec2Prototype(f64);
 
 vec3Prototype(f32);
 vec3Prototype(f64);
+
+Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v);
+Vec3f32 vec3f32AddScalar(Vec3f32 u, f32 s);
+Vec3f32 vec3f32Sub(Vec3f32 u, Vec3f32 v);
+Vec3f32 vec3f32Mult(Vec3f32 u, Vec3f32 v);
+Vec3f32 vec3f32MultScalar(Vec3f32 u, f32 s);
+Vec3f32 vec3f32DivScalar(Vec3f32 u, f32 s);
+f32 vec3f32LengthSquared(Vec3f32 v);
+f32 vec3f32Length(Vec3f32 v);
+Vec3f32 vec3f32UnitVector(Vec3f32 v);
+f32 vec3f32Dot(Vec3f32 u, Vec3f32 v);
+Vec3f32 vec3f32Cross(Vec3f32 u, Vec3f32 v);
 
 #define vec4Prototype(type)                                                    \
     typedef union U_Vec4##type {                                               \
@@ -204,34 +218,36 @@ void setLogHandler(LogHandler* handler);
 #define logFatal(message) bnLog(LogLevel_Fatal, message)
 #define logFatalf(...) bnLog(LogLevel_Fatal, __VA_ARGS__)
 
+// clang-format off
 #ifdef BN_ASSERT_ENABLED
-#define bnAssert(expr)                                                         \
-    do {                                                                       \
-        if (expr) {                                                            \
-        } else {                                                               \
-            logErrorf(                                                         \
-                "Assertion Failure: %s, in file: %s, line: %d", #expr,         \
-                __FILE__, __LINE__                                             \
-            );                                                                 \
-            debugBreak();                                                      \
-        }                                                                      \
-    } while (0)
+    #define bnAssert(expr)                                                         \
+        do {                                                                       \
+            if (expr) {                                                            \
+            } else {                                                               \
+                logErrorf(                                                         \
+                    "Assertion Failure: %s, in file: %s, line: %d", #expr,         \
+                    __FILE__, __LINE__                                             \
+                );                                                                 \
+                debugBreak();                                                      \
+            }                                                                      \
+        } while (0)
 
-#define bnAssertMsg(expr, msg)                                                 \
-    do {                                                                       \
-        if (expr) {                                                            \
-        } else {                                                               \
-            logErrorf(                                                         \
-                "Assertion Failure: %s, in file: %s, line: %d, msg: %s",       \
-                #expr, __FILE__, __LINE__, msg                                 \
-            );                                                                 \
-            debugBreak();                                                      \
-        }                                                                      \
-    } while (0)
+    #define bnAssertMsg(expr, msg)                                                 \
+        do {                                                                       \
+            if (expr) {                                                            \
+            } else {                                                               \
+                logErrorf(                                                         \
+                    "Assertion Failure: %s, in file: %s, line: %d, msg: %s",       \
+                    #expr, __FILE__, __LINE__, msg                                 \
+                );                                                                 \
+                debugBreak();                                                      \
+            }                                                                      \
+        } while (0)
 #else
-#define bnAssert(expr)
-#define bnAssertMsg(expr, msg)
+    #define bnAssert(expr)
+    #define bnAssertMsg(expr, msg)
 #endif
+// clang-format on
 
 u32 platformGetPageSize(void);
 void* platformMemReserve(u64 size);
@@ -348,7 +364,9 @@ arrayPrototype(f64);
 arrayPrototype(String32);
 
 // based on https://github.com/tsoding/nob.h
+#ifndef DYNAMIC_ARRAY_INITIAL_CAPACITY
 #define DYNAMIC_ARRAY_INITIAL_CAPACITY 256
+#endif
 
 #define daInit(allocator)                                                      \
     {.items = NULL, .count = 0, .capacity = 0, .alloc = allocator}
@@ -432,7 +450,9 @@ arrayPrototype(String32);
      .capacity = arrayLength((item)),                                          \
      .alloc = NULL}
 
+#ifndef HASH_TABLE_INITIAL_CAPACITY
 #define HASH_TABLE_INITIAL_CAPACITY 256
+#endif
 
 typedef struct {
     String32 key;
@@ -955,6 +975,52 @@ void htAppend(HashTable* table, String32 key, void* value) {
     }
     table->items[idx].value = value;
     table->count++;
+}
+
+Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v) {
+    return (Vec3f32){{u.x + v.x, u.y + v.y, u.z + v.z}};
+}
+
+Vec3f32 vec3f32AddScalar(Vec3f32 u, f32 s) {
+    return (Vec3f32){{u.x + s, u.y + s, u.z + s}};
+}
+
+Vec3f32 vec3f32Sub(Vec3f32 u, Vec3f32 v) {
+    return (Vec3f32){{u.x - v.x, u.y - v.y, u.z - v.z}};
+}
+
+Vec3f32 vec3f32Mult(Vec3f32 u, Vec3f32 v) {
+    return (Vec3f32){{u.x * v.x, u.y * v.y, u.z * v.z}};
+}
+
+Vec3f32 vec3f32MultScalar(Vec3f32 u, f32 s) {
+    return (Vec3f32){{u.x * s, u.y * s, u.z * s}};
+}
+
+Vec3f32 vec3f32DivScalar(Vec3f32 u, f32 s) {
+    return (Vec3f32)vec3f32MultScalar(u, (1 / s));
+}
+
+f32 vec3f32LengthSquared(Vec3f32 v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
+f32 vec3f32Length(Vec3f32 v) {
+    return sqrt(vec3f32LengthSquared(v));
+}
+
+Vec3f32 vec3f32UnitVector(Vec3f32 v) {
+    return vec3f32DivScalar(v, vec3f32Length(v));
+}
+
+f32 vec3f32Dot(Vec3f32 u, Vec3f32 v) {
+    return u.x * v.x + u.y * v.y + u.z * v.z;
+}
+
+Vec3f32 vec3f32Cross(Vec3f32 u, Vec3f32 v) {
+    return (Vec3f32){
+        {u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z, u.x * v.y - u.y * v.x}
+    };
 }
 
 #endif
