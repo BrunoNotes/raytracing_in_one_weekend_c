@@ -25,15 +25,19 @@ Vec3f32 rayAt(Ray* r, f32 t) {
 
 f32 hitSphere(Vec3f32 center, f32 radius, Ray* r) {
     Vec3f32 oc = vec3f32Sub(center, r->orig);
-    f32 a = vec3f32Dot(r->dir, r->dir);
-    f32 b = -2.0 * vec3f32Dot(r->dir, oc);
-    f32 c = vec3f32Dot(oc, oc) - radius * radius;
-    f32 discriminant = b * b - 4 * a * c;
+    // f32 a = vec3f32Dot(r->dir, r->dir);
+    // f32 b = -2.0 * vec3f32Dot(r->dir, oc);
+    // f32 c = vec3f32Dot(oc, oc) - radius * radius;
+    // f32 discriminant = b * b - 4 * a * c;
+    f32 a = vec3f32LengthSquared(r->dir);
+    f32 h = vec3f32Dot(r->dir, oc);
+    f32 c = vec3f32LengthSquared(oc) - radius * radius;
+    f32 discriminant = h * h - a * c;
 
     if (discriminant < 0) {
         return -1.0;
     } else {
-        return (-b - sqrt(discriminant)) / (2.0 * a);
+        return (h - sqrt(discriminant)) / a;
     }
 }
 

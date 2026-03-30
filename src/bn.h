@@ -14,7 +14,6 @@ BrunoNotes C helper lib
 #endif
 
 #include <stdbool.h>
-#include <math.h>
 
 #ifndef thread_local
     #define thread_local _Thread_local
@@ -288,7 +287,7 @@ TempArena beginTempArena(Arena* arena);
 void endTempArena(TempArena temp);
 
 void* heapAllocatorPush(u64 size, b32 non_zero);
-void heapAllocatorFree(void* data);
+void heapAllocatorFree(void* data, u64 size);
 
 typedef enum {
     AllocatorType_ArenaStatic,
@@ -311,6 +310,7 @@ typedef struct {
 typedef struct {
     AllocatorType type;
     void* data;
+    u64 size;
     TempArena _temp;
 } Allocator;
 
@@ -331,14 +331,6 @@ void allocatorFreeAll(Allocator* alloc);
     (T*)allocatorPush((AllocatorParams){sizeof(T) * (len), true}, (alloc))
 #define allocFree(alloc, data) allocatorFree((alloc), (data))
 #define allocFreeAll(alloc) allocatorFreeAll((alloc))
-
-typedef struct {
-    Allocator allocator;
-    Allocator temp_allocator;
-} BNContext;
-
-BNContext* getContext();
-void destroyContext();
 
 #define arrayPrototype(type)                                                   \
     typedef struct {                                                           \
@@ -377,8 +369,9 @@ arrayPrototype(String32);
             if ((da)->capacity == 0) {                                         \
                 (da)->capacity = DYNAMIC_ARRAY_INITIAL_CAPACITY;               \
                 (da)->items = allocatorPush(                                   \
-                    (AllocatorParams){(da)->capacity * sizeof(*(da)->items),   \
-                                      false},                                  \
+                    (AllocatorParams){                                         \
+                        (da)->capacity * sizeof(*(da)->items), false           \
+                    },                                                         \
                     (da)->alloc                                                \
                 );                                                             \
             } else {                                                           \
@@ -387,8 +380,9 @@ arrayPrototype(String32);
                     (da)->capacity *= 2;                                       \
                 }                                                              \
                 void* new_entries = allocatorPush(                             \
-                    (AllocatorParams){(da)->capacity * sizeof(*(da)->items),   \
-                                      false},                                  \
+                    (AllocatorParams){                                         \
+                        (da)->capacity * sizeof(*(da)->items), false           \
+                    },                                                         \
                     (da)->alloc                                                \
                 );                                                             \
                 memcpy(                                                        \
@@ -683,6 +677,7 @@ Allocator initAllocator(AllocatorInitParams params) {
         break;
     case AllocatorType_HeapAllocator:
         alloc.data = NULL;
+        alloc.size = 0;
         alloc.type = params.type;
         break;
     case AllocatorType_TempAllocator:
@@ -719,7 +714,14 @@ void destroyAllocator(Allocator* alloc) {
 }
 
 void* heapAllocatorPush(u64 size, b32 non_zero) {
-    void* data = malloc(size);
+    // void* data = malloc(size);
+    u32 page_size = platformGetPageSize();
+    size = alignPow2(size, page_size);
+    void* data = platformMemReserve(size);
+
+    if (!platformMemCommit(data, size)) {
+        return NULL;
+    }
 
     if (!non_zero) {
         memset(data, 0, size);
@@ -728,8 +730,10 @@ void* heapAllocatorPush(u64 size, b32 non_zero) {
     return data;
 }
 
-void heapAllocatorFree(void* data) {
-    free(data);
+void heapAllocatorFree(void* data, u64 size) {
+    // free(data);
+    // data = NULL;
+    platformMemRelease(data, size);
 }
 
 void* allocatorPush(AllocatorParams params, Allocator* alloc) {
@@ -738,6 +742,7 @@ void* allocatorPush(AllocatorParams params, Allocator* alloc) {
     case AllocatorType_ArenaGrowing:
         return arenaPush((Arena*)alloc->data, params.size, params.non_zero);
     case AllocatorType_HeapAllocator:
+        alloc -> size = params.size;
         return heapAllocatorPush(params.size, params.non_zero);
     case AllocatorType_TempAllocator:
         return arenaPush(
@@ -756,7 +761,7 @@ void allocatorFree(Allocator* alloc, void* data) {
     case AllocatorType_TempAllocator:
         break;
     case AllocatorType_HeapAllocator:
-        heapAllocatorFree(data);
+        heapAllocatorFree(data, alloc->size);
         break;
     default:
         logPanic("Allocator not initialized");
@@ -779,49 +784,6 @@ void allocatorFreeAll(Allocator* alloc) {
     default:
         logPanic("Allocator not initialized");
         break;
-    }
-}
-
-thread_local Arena* bn_g_context_arena = NULL;
-thread_local BNContext* bn_g_context = NULL;
-
-BNContext* initBNContext() {
-    if (bn_g_context_arena == NULL) {
-        bn_g_context_arena = initArena(Mib(64), Mib(1), ArenaType_Static);
-    }
-    BNContext* context =
-        (BNContext*)arenaPush(bn_g_context_arena, sizeof(BNContext), false);
-
-    context->allocator =
-        initAllocator((AllocatorInitParams){Mib(64), Mib(1),
-                                            AllocatorType_ArenaGrowing});
-    context->temp_allocator =
-        initAllocator((AllocatorInitParams){Mib(64), Mib(1),
-                                            AllocatorType_TempAllocator});
-
-    return context;
-}
-
-void destroyBNContext(BNContext* context) {
-    destroyAllocator(&context->allocator);
-    destroyAllocator(&context->temp_allocator);
-
-    if (bn_g_context_arena != NULL) {
-        destroyArena(bn_g_context_arena);
-    }
-}
-
-BNContext* getContext() {
-    if (bn_g_context == NULL) {
-        bn_g_context = initBNContext();
-    }
-
-    return bn_g_context;
-}
-
-void destroyContext() {
-    if (bn_g_context != NULL) {
-        return destroyBNContext(bn_g_context);
     }
 }
 
@@ -905,8 +867,9 @@ void htReserve(HashTable* table, u32 expected_capacity) {
         if (table->capacity == 0) {
             table->capacity = HASH_TABLE_INITIAL_CAPACITY;
             table->items = (HashTableEntry*)allocatorPush(
-                (AllocatorParams){table->capacity * sizeof(*table->items),
-                                  false},
+                (AllocatorParams){
+                    table->capacity * sizeof(*table->items), false
+                },
                 table->alloc
             );
         } else {
@@ -914,8 +877,9 @@ void htReserve(HashTable* table, u32 expected_capacity) {
                 table->capacity *= 2;
             }
             HashTableEntry* new_entries = (HashTableEntry*)allocatorPush(
-                (AllocatorParams){table->capacity * sizeof(*table->items),
-                                  false},
+                (AllocatorParams){
+                    table->capacity * sizeof(*table->items), false
+                },
                 table->alloc
             );
 
@@ -976,6 +940,8 @@ void htAppend(HashTable* table, String32 key, void* value) {
     table->items[idx].value = value;
     table->count++;
 }
+
+#include <math.h>
 
 Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v) {
     return (Vec3f32){{u.x + v.x, u.y + v.y, u.z + v.z}};
