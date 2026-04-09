@@ -1,7 +1,7 @@
 #define NOB_IMPLEMENTATION
 #include "nob.h"
 
-static const char* CC = "gcc";
+static const char* CC = "clang";
 
 int main(int argc, char** argv) {
     NOB_GO_REBUILD_URSELF(argc, argv);

@@ -1,6 +1,6 @@
 config ?= debug
 # config ?= release
-CC := gcc
+CC := clang
 
 main: build run
 

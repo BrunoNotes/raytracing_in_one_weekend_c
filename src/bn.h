@@ -6,6 +6,8 @@ BrunoNotes C helper lib
 #include "bn.h"
 */
 
+#define BN_IMPLEMENTATION
+
 #define BN_ASSERT_ENABLED // comment to disable asserts
 
 // clang-format off
@@ -65,76 +67,7 @@ typedef i64 b64;
 typedef float f32;
 typedef double f64;
 
-#define vec2Prototype(type)                                                    \
-    typedef union U_Vec2##type {                                               \
-        type elements[2];                                                      \
-        struct {                                                               \
-            union {                                                            \
-                type x, r, s, u;                                               \
-            };                                                                 \
-            union {                                                            \
-                type y, g, t, v;                                               \
-            };                                                                 \
-        };                                                                     \
-    } Vec2##type;
-
-vec2Prototype(f32);
-vec2Prototype(f64);
-
-#define vec3Prototype(type)                                                    \
-    typedef union U_Vec3##type {                                               \
-        type elements[3];                                                      \
-        struct {                                                               \
-            union {                                                            \
-                type x, r, s, u;                                               \
-            };                                                                 \
-            union {                                                            \
-                type y, g, t, v;                                               \
-            };                                                                 \
-            union {                                                            \
-                type z, b, p, w;                                               \
-            };                                                                 \
-        };                                                                     \
-    } Vec3##type;
-
-vec3Prototype(f32);
-vec3Prototype(f64);
-
-Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v);
-Vec3f32 vec3f32AddScalar(Vec3f32 u, f32 s);
-Vec3f32 vec3f32Sub(Vec3f32 u, Vec3f32 v);
-Vec3f32 vec3f32Mult(Vec3f32 u, Vec3f32 v);
-Vec3f32 vec3f32MultScalar(Vec3f32 u, f32 s);
-Vec3f32 vec3f32DivScalar(Vec3f32 u, f32 s);
-f32 vec3f32LengthSquared(Vec3f32 v);
-f32 vec3f32Length(Vec3f32 v);
-Vec3f32 vec3f32UnitVector(Vec3f32 v);
-f32 vec3f32Dot(Vec3f32 u, Vec3f32 v);
-Vec3f32 vec3f32Cross(Vec3f32 u, Vec3f32 v);
-
-#define vec4Prototype(type)                                                    \
-    typedef union U_Vec4##type {                                               \
-        type elements[4];                                                      \
-        struct {                                                               \
-            union {                                                            \
-                type x, r, s;                                                  \
-            };                                                                 \
-            union {                                                            \
-                type y, g, t;                                                  \
-            };                                                                 \
-            union {                                                            \
-                type z, b, p;                                                  \
-            };                                                                 \
-            union {                                                            \
-                type w, a, q;                                                  \
-            };                                                                 \
-        };                                                                     \
-    } Vec4##type;
-
-vec4Prototype(f32);
-vec4Prototype(f64);
-
-#define arrayLength(a) (sizeof(a) / sizeof(a[0]))
+#define bnArrayLength(a) (sizeof(a) / sizeof(a[0]))
 
 #define slicePrototype(type)                                                   \
     typedef struct {                                                           \
@@ -182,40 +115,40 @@ String32 string32Substring(String32 str, u32 start, u32 end);
 #define Mib(n) ((u32)(n) * MegaByte)
 #define Gib(n) ((u32)(n) * GigaByte)
 
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define bnMin(a, b) (((a) < (b)) ? (a) : (b))
+#define bnMax(a, b) (((a) > (b)) ? (a) : (b))
 
-#define alignPow2(x, b) (((x) + (b) - 1) & (~((b) - 1)))
+#define bnAlignPow2(x, b) (((x) + (b) - 1) & (~((b) - 1)))
 
 typedef enum {
-    LogLevel_Debug = 0,
-    LogLevel_Info = 1,
-    LogLevel_Warning = 2,
-    LogLevel_Error = 3,
-    LogLevel_Panic = 4,
-} LogLevel;
+    BN_LogLevel_Debug = 0,
+    BN_LogLevel_Info = 1,
+    BN_LogLevel_Warning = 2,
+    BN_LogLevel_Error = 3,
+    BN_LogLevel_Panic = 4,
+} BN_LogLevel;
 
-void defaultLogHandler(LogLevel level, const char* fmt, va_list args);
+void bnDefaultLogHandler(BN_LogLevel level, const char* fmt, va_list args);
 
-typedef void(LogHandler)(LogLevel level, const char* fmt, va_list args);
+typedef void(BN_LogHandler)(BN_LogLevel level, const char* fmt, va_list args);
 
-void bnLog(LogLevel level, const char* fmt, ...);
-LogLevel getMinLogLevel();
-void setMinLogLevel(LogLevel level);
-void setLogHandler(LogHandler* handler);
+void bnLog(BN_LogLevel level, const char* fmt, ...);
+BN_LogLevel bnGetMinLogLevel();
+void bnSetMinLogLevel(BN_LogLevel level);
+void bnSetLogHandler(BN_LogHandler* handler);
 
-#define logInfo(message) bnLog(LogLevel_Info, message)
-#define logInfof(...) bnLog(LogLevel_Info, __VA_ARGS__)
-#define logWarn(message) bnLog(LogLevel_Warning, message)
-#define logWarnf(...) bnLog(LogLevel_Warning, __VA_ARGS__)
-#define logError(message) bnLog(LogLevel_Error, message)
-#define logErrorf(...) bnLog(LogLevel_Error, __VA_ARGS__)
-#define logPanic(message) bnLog(LogLevel_Panic, message)
-#define logPanicf(...) bnLog(LogLevel_Panic, __VA_ARGS__)
-#define logDebug(message) bnLog(LogLevel_Debug, message)
-#define logDebugf(...) bnLog(LogLevel_Debug, __VA_ARGS__)
-#define logFatal(message) bnLog(LogLevel_Fatal, message)
-#define logFatalf(...) bnLog(LogLevel_Fatal, __VA_ARGS__)
+#define bnLogInfo(message) bnLog(BN_LogLevel_Info, message)
+#define bnLogInfof(...) bnLog(BN_LogLevel_Info, __VA_ARGS__)
+#define bnLogWarn(message) bnLog(BN_LogLevel_Warning, message)
+#define bnLogWarnf(...) bnLog(BN_LogLevel_Warning, __VA_ARGS__)
+#define bnLogError(message) bnLog(BN_LogLevel_Error, message)
+#define bnLogErrorf(...) bnLog(BN_LogLevel_Error, __VA_ARGS__)
+#define bnLogPanic(message) bnLog(BN_LogLevel_Panic, message)
+#define bnLogPanicf(...) bnLog(BN_LogLevel_Panic, __VA_ARGS__)
+#define bnLogDebug(message) bnLog(BN_LogLevel_Debug, message)
+#define bnLogDebugf(...) bnLog(BN_LogLevel_Debug, __VA_ARGS__)
+#define bnLogFatal(message) bnLog(BN_LogLevel_Fatal, message)
+#define bnLogFatalf(...) bnLog(BN_LogLevel_Fatal, __VA_ARGS__)
 
 // clang-format off
 #ifdef BN_ASSERT_ENABLED
@@ -223,7 +156,7 @@ void setLogHandler(LogHandler* handler);
         do {                                                                       \
             if (expr) {                                                            \
             } else {                                                               \
-                logErrorf(                                                         \
+                bnLogErrorf(                                                         \
                     "Assertion Failure: %s, in file: %s, line: %d", #expr,         \
                     __FILE__, __LINE__                                             \
                 );                                                                 \
@@ -235,7 +168,7 @@ void setLogHandler(LogHandler* handler);
         do {                                                                       \
             if (expr) {                                                            \
             } else {                                                               \
-                logErrorf(                                                         \
+                bnLogErrorf(                                                         \
                     "Assertion Failure: %s, in file: %s, line: %d, msg: %s",       \
                     #expr, __FILE__, __LINE__, msg                                 \
                 );                                                                 \
@@ -248,112 +181,112 @@ void setLogHandler(LogHandler* handler);
 #endif
 // clang-format on
 
-u32 platformGetPageSize(void);
-void* platformMemReserve(u64 size);
-b32 platformMemCommit(void* ptr, u64 size);
-b32 platformMemDecommit(void* ptr, u64 size);
-b32 platformMemRelease(void* ptr, u64 size);
+u32 bnPlatformGetPageSize(void);
+void* bnPlatformMemReserve(u64 size);
+b32 bnPlatformMemCommit(void* ptr, u64 size);
+b32 bnPlatformMemDecommit(void* ptr, u64 size);
+b32 bnPlatformMemRelease(void* ptr, u64 size);
 
-#define ARENA_BASE_POS (sizeof(Arena))
-#define ARENA_ALIGN (sizeof(void*))
+#define BN_ARENA_BASE_POS (sizeof(BN_Arena))
+#define BN_ARENA_ALIGN (sizeof(void*))
 
 typedef enum {
-    ArenaType_Static,
-    ArenaType_Growing,
-} ArenaType;
+    BN_ArentaType_Static,
+    BN_ArenaType_Growing,
+} BN_ArenaType;
 
 typedef struct {
     u64 reserve_size;
     u64 commit_size;
     u64 pos;
     u64 commit_pos;
-    ArenaType type;
-} Arena;
+    BN_ArenaType type;
+} BN_Arena;
 
-Arena* initArena(u64 reserve_size, u64 commit_size, ArenaType type);
-void destroyArena(Arena* arena);
+BN_Arena* bnInitArena(u64 reserve_size, u64 commit_size, BN_ArenaType type);
+void bnDestroyArena(BN_Arena* arena);
 
-void* arenaPush(Arena* arena, u64 size, b32 non_zero);
-void arenaRealloc(Arena* arena, u64 new_pos);
-void arenaPop(Arena* arena, u64 size);
-void arenaPopTo(Arena* arena, u64 pos);
+void* bnArenaPush(BN_Arena* arena, u64 size, b32 non_zero);
+void bnArenaRealloc(BN_Arena* arena, u64 new_pos);
+void bnArenaPop(BN_Arena* arena, u64 size);
+void bnArenaPopTo(BN_Arena* arena, u64 pos);
 
 typedef struct {
-    Arena* arena;
+    BN_Arena* arena;
     u64 start_pos;
-} TempArena;
+} BN_TempArena;
 
-TempArena beginTempArena(Arena* arena);
-void endTempArena(TempArena temp);
+BN_TempArena bnBeginTempArena(BN_Arena* arena);
+void bnEndTempArena(BN_TempArena temp);
 
-void* heapAllocatorPush(u64 size, b32 non_zero);
-void heapAllocatorFree(void* data, u64 size);
+void* bnHeapAllocatorPush(u64 size, b32 non_zero);
+void bnHeapAllocatorFree(void* data, u64 size);
 
 typedef enum {
-    AllocatorType_ArenaStatic,
-    AllocatorType_ArenaGrowing,
-    AllocatorType_HeapAllocator,
-    AllocatorType_TempAllocator,
-} AllocatorType;
+    BN_AllocatorType_ArenaStatic,
+    BN_AllocatorType_ArenaGrowing,
+    BN_AllocatorType_HeapAllocator,
+    BN_AllocatorType_TempAllocator,
+} BN_AllocatorType;
 
 typedef struct {
     u64 reserve_size;
     u64 commit_size;
-    AllocatorType type;
-} AllocatorInitParams;
+    BN_AllocatorType type;
+} BN_AllocatorInitParams;
 
 typedef struct {
     u64 size;
     b32 non_zero;
-} AllocatorParams;
+} BN_AllocatorParams;
 
 typedef struct {
-    AllocatorType type;
+    BN_AllocatorType type;
     void* data;
     u64 size;
-    TempArena _temp;
-} Allocator;
+    BN_TempArena _temp;
+} BN_Allocator;
 
-Allocator initAllocator(AllocatorInitParams params);
-void destroyAllocator(Allocator* alloc);
+BN_Allocator bnInitAllocator(BN_AllocatorInitParams params);
+void bnDestroyAllocator(BN_Allocator* alloc);
 
-void* allocatorPush(AllocatorParams params, Allocator* alloc);
-void allocatorFree(Allocator* alloc, void* data);
-void allocatorFreeAll(Allocator* alloc);
+void* bnAllocatorPush(BN_AllocatorParams params, BN_Allocator* alloc);
+void bnAllocatorFree(BN_Allocator* alloc, void* data);
+void bnAllocatorFreeAll(BN_Allocator* alloc);
 
-#define allocPushStruct(alloc, T)                                              \
-    (T*)allocatorPush((AllocatorParams){sizeof(T), false}, (alloc))
-#define allocPushStructNZ(alloc, T)                                            \
-    (T*)allocatorPush((AllocatorParams){sizeof(T), true}, (alloc))
-#define allocPushArray(alloc, T, len)                                          \
-    (T*)allocatorPush((AllocatorParams){sizeof(T) * (len), false}, (alloc))
-#define allocPushArrayNZ(alloc, T, len)                                        \
-    (T*)allocatorPush((AllocatorParams){sizeof(T) * (len), true}, (alloc))
-#define allocFree(alloc, data) allocatorFree((alloc), (data))
-#define allocFreeAll(alloc) allocatorFreeAll((alloc))
+#define bnAllocPushStruct(alloc, T)                                              \
+    (T*)bnAllocatorPush((AllocatorParams){sizeof(T), false}, (alloc))
+#define bnAllocPushStructNZ(alloc, T)                                            \
+    (T*)bnAllocatorPush((AllocatorParams){sizeof(T), true}, (alloc))
+#define bnAllocPushArray(alloc, T, len)                                          \
+    (T*)bnAllocatorPush((AllocatorParams){sizeof(T) * (len), false}, (alloc))
+#define bnAllocPushArrayNZ(alloc, T, len)                                        \
+    (T*)bnAllocatorPush((AllocatorParams){sizeof(T) * (len), true}, (alloc))
+#define bnAllocFree(alloc, data) bnAllocatorFree((alloc), (data))
+#define bnAllocFreeAll(alloc) bnAllocatorFreeAll((alloc))
 
-#define arrayPrototype(type)                                                   \
+#define bnArrayPrototype(type)                                                   \
     typedef struct {                                                           \
         type* items;                                                           \
         u32 count;                                                             \
         u32 capacity;                                                          \
-        Allocator* alloc;                                                      \
+        BN_Allocator* alloc;                                                      \
     } type##Array
 
-arrayPrototype(i8);
-arrayPrototype(i16);
-arrayPrototype(i32);
-arrayPrototype(i64);
-arrayPrototype(u8);
-arrayPrototype(u16);
-arrayPrototype(u32);
-arrayPrototype(u64);
-arrayPrototype(b8);
-arrayPrototype(b32);
-arrayPrototype(b64);
-arrayPrototype(f32);
-arrayPrototype(f64);
-arrayPrototype(String32);
+bnArrayPrototype(i8);
+bnArrayPrototype(i16);
+bnArrayPrototype(i32);
+bnArrayPrototype(i64);
+bnArrayPrototype(u8);
+bnArrayPrototype(u16);
+bnArrayPrototype(u32);
+bnArrayPrototype(u64);
+bnArrayPrototype(b8);
+bnArrayPrototype(b32);
+bnArrayPrototype(b64);
+bnArrayPrototype(f32);
+bnArrayPrototype(f64);
+bnArrayPrototype(String32);
 
 // based on https://github.com/tsoding/nob.h
 #ifndef DYNAMIC_ARRAY_INITIAL_CAPACITY
@@ -457,7 +390,7 @@ typedef struct {
     HashTableEntry* items;
     u32 count;
     u32 capacity;
-    Allocator* alloc;
+    BN_Allocator* alloc;
 } HashTable;
 
 #define htInit(allocator)                                                      \
@@ -475,27 +408,27 @@ void htAppend(HashTable* table, String32 key, void* value);
 
 #include <windows.h>
 
-u32 platformGetPageSize(void) {
+u32 bnPlatformGetPageSize(void) {
     SYSTEM_INFO sysinfo = {0};
     GetSystemInfo(&sysinfo);
 
     return sysinfo.dwPageSize;
 }
 
-void* platformMemReserve(u64 size) {
+void* bnPlatformMemReserve(u64 size) {
     return VirtualAlloc(NULL, size, MEM_RESERVE, PAGE_READWRITE);
 }
 
-b32 platformMemCommit(void* ptr, u64 size) {
+b32 bnPlatformMemCommit(void* ptr, u64 size) {
     void* ret = VirtualAlloc(ptr, size, MEM_COMMIT, PAGE_READWRITE);
     return ret != NULL;
 }
 
-b32 platformMemDecommit(void* ptr, u64 size) {
+b32 bnPlatformMemDecommit(void* ptr, u64 size) {
     return VirtualFree(ptr, size, MEM_DECOMMIT);
 }
 
-b32 platformMemRelease(void* ptr, u64 size) {
+b32 bnPlatformMemRelease(void* ptr, u64 size) {
     return VirtualFree(ptr, size, MEM_RELEASE);
 }
 
@@ -504,11 +437,11 @@ b32 platformMemRelease(void* ptr, u64 size) {
 #include <sys/mman.h>
 #include <unistd.h>
 
-u32 platformGetPageSize(void) {
+u32 bnPlatformGetPageSize(void) {
     return (u32)sysconf(_SC_PAGESIZE);
 }
 
-void* platformMemReserve(u64 size) {
+void* bnPlatformMemReserve(u64 size) {
     void* out = mmap(NULL, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (out == MAP_FAILED) {
         return NULL;
@@ -516,12 +449,12 @@ void* platformMemReserve(u64 size) {
     return out;
 }
 
-b32 platformMemCommit(void* ptr, u64 size) {
+b32 bnPlatformMemCommit(void* ptr, u64 size) {
     i32 ret = mprotect(ptr, size, PROT_READ | PROT_WRITE);
     return ret == 0;
 }
 
-b32 platformMemDecommit(void* ptr, u64 size) {
+b32 bnPlatformMemDecommit(void* ptr, u64 size) {
     i32 ret = mprotect(ptr, size, PROT_NONE);
     if (ret != 0)
         return false;
@@ -529,7 +462,7 @@ b32 platformMemDecommit(void* ptr, u64 size) {
     return ret == 0;
 }
 
-b32 platformMemRelease(void* ptr, u64 size) {
+b32 bnPlatformMemRelease(void* ptr, u64 size) {
     i32 ret = munmap(ptr, size);
     return ret == 0;
 }
@@ -537,58 +470,58 @@ b32 platformMemRelease(void* ptr, u64 size) {
 #endif
 
 String32 string32Substring(String32 str, u32 start, u32 end) {
-    end = min(end, str.len);
-    start = min(start, end);
+    end = bnMin(end, str.len);
+    start = bnMin(start, end);
     return (String32){str.str + start, end - start};
 }
 
 #include <string.h>
 
-Arena* initArena(u64 reserve_size, u64 commit_size, ArenaType type) {
-    u32 page_size = platformGetPageSize();
+BN_Arena* bnInitArena(u64 reserve_size, u64 commit_size, BN_ArenaType type) {
+    u32 page_size = bnPlatformGetPageSize();
 
-    reserve_size = alignPow2(reserve_size, page_size);
-    commit_size = alignPow2(commit_size, page_size);
+    reserve_size = bnAlignPow2(reserve_size, page_size);
+    commit_size = bnAlignPow2(commit_size, page_size);
 
-    Arena* arena = (Arena*)platformMemReserve(reserve_size);
+    BN_Arena* arena = (BN_Arena*)bnPlatformMemReserve(reserve_size);
 
-    if (!platformMemCommit(arena, commit_size)) {
+    if (!bnPlatformMemCommit(arena, commit_size)) {
         return NULL;
     }
 
     arena->reserve_size = reserve_size;
     arena->commit_size = commit_size;
-    arena->pos = ARENA_BASE_POS;
+    arena->pos = BN_ARENA_BASE_POS;
     arena->commit_pos = commit_size;
     arena->type = type;
 
     return arena;
 }
 
-void destroyArena(Arena* arena) {
-    bool ok = platformMemRelease(arena, arena->reserve_size);
+void bnDestroyArena(BN_Arena* arena) {
+    bool ok = bnPlatformMemRelease(arena, arena->reserve_size);
     bnAssert(ok == true);
 }
 
-void* arenaPush(Arena* arena, u64 size, b32 non_zero) {
-    u64 pos_aligned = alignPow2(arena->pos, ARENA_ALIGN);
+void* bnArenaPush(BN_Arena* arena, u64 size, b32 non_zero) {
+    u64 pos_aligned = bnAlignPow2(arena->pos, BN_ARENA_ALIGN);
     u64 new_pos = pos_aligned + size;
 
     // Grow arena if needed
-    if (new_pos > arena->reserve_size && arena->type == ArenaType_Growing) {
-        arenaRealloc(arena, new_pos);
+    if (new_pos > arena->reserve_size && arena->type == BN_ArenaType_Growing) {
+        bnArenaRealloc(arena, new_pos);
     }
 
     if (new_pos > arena->commit_pos) {
         u64 new_commit_pos = new_pos;
         new_commit_pos += arena->commit_size - 1;
         new_commit_pos -= new_commit_pos % arena->commit_size;
-        new_commit_pos = min(new_commit_pos, arena->reserve_size);
+        new_commit_pos = bnMin(new_commit_pos, arena->reserve_size);
 
         u8* mem = (u8*)arena + arena->commit_pos;
         u64 commit_size = new_commit_pos - arena->commit_pos;
 
-        if (!platformMemCommit(mem, commit_size)) {
+        if (!bnPlatformMemCommit(mem, commit_size)) {
             return NULL;
         }
 
@@ -606,22 +539,22 @@ void* arenaPush(Arena* arena, u64 size, b32 non_zero) {
     return out;
 }
 
-void arenaRealloc(Arena* arena, u64 new_pos) {
+void bnArenaRealloc(BN_Arena* arena, u64 new_pos) {
     u64 new_reserve_size = arena->reserve_size * 2;
     while (new_reserve_size < new_pos) {
         new_reserve_size *= 2;
     }
 
-    u32 page_size = platformGetPageSize();
-    new_reserve_size = alignPow2(new_reserve_size, page_size);
+    u32 page_size = bnPlatformGetPageSize();
+    new_reserve_size = bnAlignPow2(new_reserve_size, page_size);
 
-    Arena* new_arena = (Arena*)platformMemReserve(new_reserve_size);
+    BN_Arena* new_arena = (BN_Arena*)bnPlatformMemReserve(new_reserve_size);
     bnAssert(new_arena != NULL);
 
     // Copy existing data and commit the current committed size
     memcpy(new_arena, arena, arena->commit_pos);
-    if (!platformMemCommit(new_arena, arena->commit_pos)) {
-        platformMemRelease(new_arena, new_reserve_size);
+    if (!bnPlatformMemCommit(new_arena, arena->commit_pos)) {
+        bnPlatformMemRelease(new_arena, new_reserve_size);
         return;
     }
 
@@ -631,95 +564,95 @@ void arenaRealloc(Arena* arena, u64 new_pos) {
     new_arena->commit_pos = arena->commit_pos;
 
     // Release old arena and update pointer
-    platformMemRelease(arena, arena->reserve_size);
+    bnPlatformMemRelease(arena, arena->reserve_size);
 
     arena = new_arena;
 }
 
-void arenaPop(Arena* arena, u64 size) {
-    size = min(size, arena->pos - ARENA_BASE_POS);
+void bnArenaPop(BN_Arena* arena, u64 size) {
+    size = bnMin(size, arena->pos - BN_ARENA_BASE_POS);
     arena->pos -= size;
 }
 
-void arenaPopTo(Arena* arena, u64 pos) {
+void bnArenaPopTo(BN_Arena* arena, u64 pos) {
     u64 size = pos < arena->pos ? arena->pos - pos : 0;
-    arenaPop(arena, size);
+    bnArenaPop(arena, size);
 }
 
-TempArena beginTempArena(Arena* arena) {
-    return (TempArena){
+BN_TempArena bnBeginTempArena(BN_Arena* arena) {
+    return (BN_TempArena){
         .arena = arena,
         .start_pos = arena->pos,
     };
 }
 
-void endTempArena(TempArena temp) {
-    arenaPopTo(temp.arena, temp.start_pos);
+void bnEndTempArena(BN_TempArena temp) {
+    bnArenaPopTo(temp.arena, temp.start_pos);
 }
 
 #include <stdlib.h>
 
-Allocator initAllocator(AllocatorInitParams params) {
-    Allocator alloc = {0};
+BN_Allocator bnInitAllocator(BN_AllocatorInitParams params) {
+    BN_Allocator alloc = {0};
 
     switch (params.type) {
-    case AllocatorType_ArenaStatic:
-        alloc.data = initArena(
-            params.reserve_size, params.commit_size, ArenaType_Static
+    case BN_AllocatorType_ArenaStatic:
+        alloc.data = bnInitArena(
+            params.reserve_size, params.commit_size, BN_ArentaType_Static
         );
         alloc.type = params.type;
         break;
-    case AllocatorType_ArenaGrowing:
-        alloc.data = initArena(
-            params.reserve_size, params.commit_size, ArenaType_Growing
+    case BN_AllocatorType_ArenaGrowing:
+        alloc.data = bnInitArena(
+            params.reserve_size, params.commit_size, BN_ArenaType_Growing
         );
         alloc.type = params.type;
         break;
-    case AllocatorType_HeapAllocator:
+    case BN_AllocatorType_HeapAllocator:
         alloc.data = NULL;
         alloc.size = 0;
         alloc.type = params.type;
         break;
-    case AllocatorType_TempAllocator:
-        alloc.data = initArena(
-            params.reserve_size, params.commit_size, ArenaType_Growing
+    case BN_AllocatorType_TempAllocator:
+        alloc.data = bnInitArena(
+            params.reserve_size, params.commit_size, BN_ArenaType_Growing
         );
         alloc.type = params.type;
-        alloc._temp = beginTempArena((Arena*)alloc.data);
+        alloc._temp = bnBeginTempArena((BN_Arena*)alloc.data);
         break;
     default:
-        logPanic("Allocator not implemented");
+        bnLogPanic("Allocator not implemented");
         break;
     }
 
     return alloc;
 }
 
-void destroyAllocator(Allocator* alloc) {
+void bnDestroyAllocator(BN_Allocator* alloc) {
     switch (alloc->type) {
-    case AllocatorType_ArenaStatic:
-    case AllocatorType_ArenaGrowing:
-        destroyArena((Arena*)alloc->data);
+    case BN_AllocatorType_ArenaStatic:
+    case BN_AllocatorType_ArenaGrowing:
+        bnDestroyArena((BN_Arena*)alloc->data);
         break;
-    case AllocatorType_HeapAllocator:
+    case BN_AllocatorType_HeapAllocator:
         break;
-    case AllocatorType_TempAllocator:
-        endTempArena(alloc->_temp);
-        destroyArena((Arena*)alloc->data);
+    case BN_AllocatorType_TempAllocator:
+        bnEndTempArena(alloc->_temp);
+        bnDestroyArena((BN_Arena*)alloc->data);
         break;
     default:
-        logPanic("Allocator not implemented");
+        bnLogPanic("Allocator not implemented");
         break;
     }
 }
 
-void* heapAllocatorPush(u64 size, b32 non_zero) {
+void* bnHeapAllocatorPush(u64 size, b32 non_zero) {
     // void* data = malloc(size);
-    u32 page_size = platformGetPageSize();
-    size = alignPow2(size, page_size);
-    void* data = platformMemReserve(size);
+    u32 page_size = bnPlatformGetPageSize();
+    size = bnAlignPow2(size, page_size);
+    void* data = bnPlatformMemReserve(size);
 
-    if (!platformMemCommit(data, size)) {
+    if (!bnPlatformMemCommit(data, size)) {
         return NULL;
     }
 
@@ -730,90 +663,90 @@ void* heapAllocatorPush(u64 size, b32 non_zero) {
     return data;
 }
 
-void heapAllocatorFree(void* data, u64 size) {
+void bnHeapAllocatorFree(void* data, u64 size) {
     // free(data);
     // data = NULL;
-    platformMemRelease(data, size);
+    bnPlatformMemRelease(data, size);
 }
 
-void* allocatorPush(AllocatorParams params, Allocator* alloc) {
+void* bnAllocatorPush(BN_AllocatorParams params, BN_Allocator* alloc) {
     switch (alloc->type) {
-    case AllocatorType_ArenaStatic:
-    case AllocatorType_ArenaGrowing:
-        return arenaPush((Arena*)alloc->data, params.size, params.non_zero);
-    case AllocatorType_HeapAllocator:
+    case BN_AllocatorType_ArenaStatic:
+    case BN_AllocatorType_ArenaGrowing:
+        return bnArenaPush((BN_Arena*)alloc->data, params.size, params.non_zero);
+    case BN_AllocatorType_HeapAllocator:
         alloc -> size = params.size;
-        return heapAllocatorPush(params.size, params.non_zero);
-    case AllocatorType_TempAllocator:
-        return arenaPush(
-            (Arena*)alloc->_temp.arena, params.size, params.non_zero
+        return bnHeapAllocatorPush(params.size, params.non_zero);
+    case BN_AllocatorType_TempAllocator:
+        return bnArenaPush(
+            (BN_Arena*)alloc->_temp.arena, params.size, params.non_zero
         );
     default:
-        logPanic("Allocator not initialized");
+        bnLogPanic("Allocator not initialized");
         return NULL;
     }
 }
 
-void allocatorFree(Allocator* alloc, void* data) {
+void bnAllocatorFree(BN_Allocator* alloc, void* data) {
     switch (alloc->type) {
-    case AllocatorType_ArenaStatic:
-    case AllocatorType_ArenaGrowing:
-    case AllocatorType_TempAllocator:
+    case BN_AllocatorType_ArenaStatic:
+    case BN_AllocatorType_ArenaGrowing:
+    case BN_AllocatorType_TempAllocator:
         break;
-    case AllocatorType_HeapAllocator:
-        heapAllocatorFree(data, alloc->size);
+    case BN_AllocatorType_HeapAllocator:
+        bnHeapAllocatorFree(data, alloc->size);
         break;
     default:
-        logPanic("Allocator not initialized");
+        bnLogPanic("Allocator not initialized");
         break;
     }
 }
 
-void allocatorFreeAll(Allocator* alloc) {
+void bnAllocatorFreeAll(BN_Allocator* alloc) {
     switch (alloc->type) {
-    case AllocatorType_ArenaStatic:
-    case AllocatorType_ArenaGrowing:
-        arenaPopTo((Arena*)alloc->data, ARENA_BASE_POS);
+    case BN_AllocatorType_ArenaStatic:
+    case BN_AllocatorType_ArenaGrowing:
+        bnArenaPopTo((BN_Arena*)alloc->data, BN_ARENA_BASE_POS);
         break;
-    case AllocatorType_HeapAllocator:
+    case BN_AllocatorType_HeapAllocator:
         break;
-    case AllocatorType_TempAllocator:
-        endTempArena(alloc->_temp);
-        alloc->_temp = beginTempArena((Arena*)alloc->data);
+    case BN_AllocatorType_TempAllocator:
+        bnEndTempArena(alloc->_temp);
+        alloc->_temp = bnBeginTempArena((BN_Arena*)alloc->data);
         break;
     default:
-        logPanic("Allocator not initialized");
+        bnLogPanic("Allocator not initialized");
         break;
     }
 }
 
 #ifdef DEBUG
-static LogLevel bn_g_min_log_level = LogLevel_Debug;
+static thread_local BN_LogLevel bn_g_min_log_level = BN_LogLevel_Debug;
 #else
-static LogLevel bn_g_min_log_level = LogLevel_Info;
+static thread_local BN_LogLevel bn_g_min_log_level = BN_LogLevel_Info;
 #endif
 
-static LogHandler* bn_g_log_handler = NULL;
+static thread_local BN_LogHandler* bn_g_log_handler = NULL;
 
-void defaultLogHandler(LogLevel level, const char* fmt, va_list args) {
+void bnDefaultLogHandler(BN_LogLevel level, const char* fmt, va_list args) {
     if (level < bn_g_min_log_level) {
         return;
     }
 
     switch (level) {
-    case LogLevel_Debug:
+    case BN_LogLevel_Debug:
         fprintf(stderr, "\x1b[90m[Debug]\x1b[0m ");
         break;
-    case LogLevel_Info:
+    case BN_LogLevel_Info:
         fprintf(stderr, "\x1b[0m[Info]\x1b[0m ");
         break;
-    case LogLevel_Warning:
+    case BN_LogLevel_Warning:
         fprintf(stderr, "\x1b[33m[Warn]\x1b[0m ");
         break;
-    case LogLevel_Error:
+    case BN_LogLevel_Error:
         fprintf(stderr, "\x1b[31m[Error]\x1b[0m ");
         break;
-    case LogLevel_Panic:
+    case BN_LogLevel_Panic:
         fprintf(stderr, "\x1b[35m[Panic]\x1b[0m ");
         break;
     default:
@@ -823,32 +756,32 @@ void defaultLogHandler(LogLevel level, const char* fmt, va_list args) {
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
 
-    if (level == LogLevel_Panic) {
+    if (level == BN_LogLevel_Panic) {
         exit(1);
     }
 }
 
-void bnLog(LogLevel level, const char* fmt, ...) {
+void bnLog(BN_LogLevel level, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
     if (bn_g_log_handler == NULL) {
-        bn_g_log_handler = &defaultLogHandler;
+        bn_g_log_handler = &bnDefaultLogHandler;
     }
 
     bn_g_log_handler(level, fmt, args);
     va_end(args);
 }
 
-LogLevel getMinLogLevel() {
+BN_LogLevel bnGetMinLogLevel() {
     return bn_g_min_log_level;
 }
 
-void setMinLogLevel(LogLevel level) {
+void bnSetMinLogLevel(BN_LogLevel level) {
     bn_g_min_log_level = level;
 }
 
-void setLogHandler(LogHandler* handler) {
+void bnSetLogHandler(BN_LogHandler* handler) {
     bn_g_log_handler = handler;
 }
 
@@ -866,8 +799,8 @@ void htReserve(HashTable* table, u32 expected_capacity) {
     if (expected_capacity > table->capacity) {
         if (table->capacity == 0) {
             table->capacity = HASH_TABLE_INITIAL_CAPACITY;
-            table->items = (HashTableEntry*)allocatorPush(
-                (AllocatorParams){
+            table->items = (HashTableEntry*)bnAllocatorPush(
+                (BN_AllocatorParams){
                     table->capacity * sizeof(*table->items), false
                 },
                 table->alloc
@@ -876,8 +809,8 @@ void htReserve(HashTable* table, u32 expected_capacity) {
             while (expected_capacity > table->capacity) {
                 table->capacity *= 2;
             }
-            HashTableEntry* new_entries = (HashTableEntry*)allocatorPush(
-                (AllocatorParams){
+            HashTableEntry* new_entries = (HashTableEntry*)bnAllocatorPush(
+                (BN_AllocatorParams){
                     table->capacity * sizeof(*table->items), false
                 },
                 table->alloc
@@ -889,7 +822,7 @@ void htReserve(HashTable* table, u32 expected_capacity) {
                 }
             }
 
-            allocatorFree(table->alloc, table->items);
+            bnAllocatorFree(table->alloc, table->items);
             table->items = new_entries;
         }
         bnAssert(table->items != NULL);
@@ -897,7 +830,7 @@ void htReserve(HashTable* table, u32 expected_capacity) {
 }
 
 void htFree(HashTable* table) {
-    allocatorFree(table->alloc, table->items);
+    bnAllocatorFree(table->alloc, table->items);
     table->count = 0;
     table->capacity = 0;
 }
@@ -939,54 +872,6 @@ void htAppend(HashTable* table, String32 key, void* value) {
     }
     table->items[idx].value = value;
     table->count++;
-}
-
-#include <math.h>
-
-Vec3f32 vec3f32Add(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x + v.x, u.y + v.y, u.z + v.z}};
-}
-
-Vec3f32 vec3f32AddScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32){{u.x + s, u.y + s, u.z + s}};
-}
-
-Vec3f32 vec3f32Sub(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x - v.x, u.y - v.y, u.z - v.z}};
-}
-
-Vec3f32 vec3f32Mult(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){{u.x * v.x, u.y * v.y, u.z * v.z}};
-}
-
-Vec3f32 vec3f32MultScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32){{u.x * s, u.y * s, u.z * s}};
-}
-
-Vec3f32 vec3f32DivScalar(Vec3f32 u, f32 s) {
-    return (Vec3f32)vec3f32MultScalar(u, (1 / s));
-}
-
-f32 vec3f32LengthSquared(Vec3f32 v) {
-    return v.x * v.x + v.y * v.y + v.z * v.z;
-}
-
-f32 vec3f32Length(Vec3f32 v) {
-    return sqrt(vec3f32LengthSquared(v));
-}
-
-Vec3f32 vec3f32UnitVector(Vec3f32 v) {
-    return vec3f32DivScalar(v, vec3f32Length(v));
-}
-
-f32 vec3f32Dot(Vec3f32 u, Vec3f32 v) {
-    return u.x * v.x + u.y * v.y + u.z * v.z;
-}
-
-Vec3f32 vec3f32Cross(Vec3f32 u, Vec3f32 v) {
-    return (Vec3f32){
-        {u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z, u.x * v.y - u.y * v.x}
-    };
 }
 
 #endif

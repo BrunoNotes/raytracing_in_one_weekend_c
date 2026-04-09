@@ -1,6 +1,9 @@
 #define BN_IMPLEMENTATION
 #include "bn.h"
 
+#include "math.h"
+#include "math.c"
+
 void writeColor(FILE* fptr, Vec3f32 pixel_color) {
     i32 ir = (i32)255.999 * pixel_color.r;
     i32 ig = (i32)255.999 * pixel_color.g;
@@ -108,7 +111,7 @@ int main(void) {
     fprintf(fptr, "\n255\n");
 
     for (int j = 0; j < image_height; j++) {
-        logInfof("Scanlines remaining: %d", (image_height - j));
+        bnLogInfof("Scanlines remaining: %d", (image_height - j));
         for (int i = 0; i < image_width; i++) {
 
             Vec3f32 pixel_center = vec3f32Add(
@@ -124,7 +127,7 @@ int main(void) {
         }
     }
 
-    logInfo("Done");
+    bnLogInfo("Done");
 
     fclose(fptr);
 
